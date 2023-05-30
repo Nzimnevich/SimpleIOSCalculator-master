@@ -145,7 +145,7 @@ final class SimpleCalculatorUITests: XCTestCase {
         app.launch()
         
         XCTContext.runActivity(named:UIDevice().name){ _ in }
-        
+        //
         XCTContext.runActivity(named:"Операция сложения дробных чисел"){ _ in
             app.buttons["0"].tap()
             app.buttons["."].tap()
