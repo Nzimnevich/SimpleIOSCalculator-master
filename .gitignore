@@ -1,0 +1,8 @@
+build/
+*.xcworkspace
+xcuserdata
+.idea/
+Build/*
+SimpleCalculatorUITests2/
+_site/
+.DS_Store
