@@ -16,12 +16,21 @@ jobs:
     steps:
       - name: Checkout sourse code
         uses: actions/checkout@v3
+        with:
+          clean: true
+          
+      - name: Remove old files
+        run: |
+          rm -rf ./Build || true
+          rm -rf ./DerivedData || true
+          rm -rf ./allure-results || true
       
       - name: Setup ruby env
         uses: actions/setup-ruby@v1.139.0
         with:
           ruby-version: '3.2.1'
-          ImageOs: 'macos-12'
+        env:
+          ImageOS: 'macos12'
         
       - name: Install Fastlane
         run: |
