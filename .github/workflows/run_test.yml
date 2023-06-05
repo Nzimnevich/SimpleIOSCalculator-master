@@ -1,58 +1,83 @@
 name: iOS starter workflow
 
-on: 
+on:
   workflow_dispatch:
   
 env:
-    LANG: "en_US.UTF-8"
-    LC_ALL: "en_US.UTF-8"
-    OS-latest: 'macos-12'
-    
+  LANG: "en_US.UTF-8" 
+  LC_ALL: "en_US.UTF-8"
+
 jobs:
   build:
-    name: Build and Test default scheme using any available iPhone simulator
+    name: Build and Test iOS App
     runs-on: self-hosted
 
     steps:
-      - name: Checkout sourse code
+      - name: Checkout source code
         uses: actions/checkout@v3
         with:
           clean: true
-          
+      
       - name: Remove old files
         run: |
           rm -rf ./Build || true
           rm -rf ./DerivedData || true
           rm -rf ./allure-results || true
-      
+        
       - name: Setup ruby env
-        uses: actions/setup-ruby@v1.139.0
+        uses: ruby/setup-ruby@v1.139.0
         with:
           ruby-version: '3.2.1'
         env:
           ImageOS: 'macos12'
-        
+
       - name: Install Fastlane
+        run: bundle install
+            
+      - name: Install & update Fastlane plugins
         run: |
-          bundle install
-          
-      - name: Install & update Fastlane plagin
-        run: |
-         bundle exec fastlane install_plugins
-         bundle exec fastlane update_plugins
-                  
-      - name: Build and Test iOS App
-        run: |
-          bundle exec fastlane ios build
-          
+          bundle exec fastlane install_plugins
+          bundle exec fastlane update_plugins
+
+      - name: Build app
+        run: bundle exec fastlane ios build_test_app
+
       - name: Run tests
+        run: bundle exec fastlane ios tests
+
+      - name: Archive xcresult
+        if: ${{ always() }}
+        working-directory: ./Build
+        run: zip -r SimpleCalculator.zip SimpleCalculator.xcresult
+        
+      - name: Save test report
+        uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: Test Report
+          path: ./Build/SimpleCalculator.zip
+          retention-days: 7
+
+      - name: Download allure xcresult parser
+        if: ${{ always() }}
         run: |
-         bundle exec fastlane ios tests
-         
+          curl -OL https://github.com/eroshenkoam/xcresults/releases/latest/download/xcresults
+          chmod +x xcresults 
+    
+      - name: Download allurectl
+        if: ${{ always() }}
+        run: |
+          curl -L -o allurectl https://github.com/allure-framework/allurectl/releases/latest/download/allurectl_darwin_amd64
+          chmod +x allurectl
+    
+      - name: Parse xcresult to allure results
+        if: ${{ always() }}
+        run: ./xcresults export ./Build/SimpleCalculator.xcresult allure-results
 
       - name: Save test report
         uses: actions/upload-artifact@v3
+        if: ${{ always() }}
         with:
-          name: Test report
-          path: ./Build/SimpleCalculator.xresult
+          name: Allure Report
+          path: allure-results
           retention-days: 7
